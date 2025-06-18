@@ -102,9 +102,64 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts)
     SimbricksMemIfM2HInDone(&memif, msg);
 }
 
-void InitDut(Vibex_top &dut)
+void init_dut(Vibex_top &dut)
 {
-    // TODO
+    // Clock and Reset
+    dut.clk_i = 0;
+    dut.rst_ni = 0;
+
+    dut.hart_id_i = 0;
+    dut.boot_addr_i = 0;
+
+    // Instruction memory interface
+    // output logic instr_req_o,
+    dut.instr_gnt_i = 0;
+    dut.instr_rvalid_i = 0;
+    // input logic instr_gnt_i,
+    // input logic instr_rvalid_i,
+    // output logic [31:0] instr_addr_o,
+    dut.instr_rdata_i = 0;
+    dut.instr_rdata_intg_i = 0;
+    dut.instr_err_i = 0;
+    // input logic [31:0] instr_rdata_i,
+    // input logic [6:0] instr_rdata_intg_i,
+    // input logic instr_err_i,
+
+    // Data memory interface
+    // output logic data_req_o,
+    dut.data_gnt_i = 0;
+    dut.data_rvalid_i = 0;
+    // input logic data_gnt_i,
+    // input logic data_rvalid_i,
+    // output logic data_we_o,
+    // output logic [3:0] data_be_o,
+    // output logic [31:0] data_addr_o,
+    // output logic [31:0] data_wdata_o,
+    // output logic [6:0] data_wdata_intg_o,
+    dut.data_rdata_i = 0;
+    dut.data_rdata_intg_i = 0;
+    dut.data_err_i = 0;
+    // input logic [31:0] data_rdata_i,
+    // input logic [6:0] data_rdata_intg_i,
+    // input logic data_err_i,
+
+    // CPU Control Signals
+    dut.fetch_enable_i = 0;
+    // input ibex_mubi_t fetch_enable_i,
+    // output logic alert_minor_o,
+    // output logic alert_major_internal_o,
+    // output logic alert_major_bus_o,
+    // output logic core_sleep_o,
+
+    dut.rst_ni = 1;
+    dut.eval();
+
+    /* raising edge */
+    dut.clk_i = 1;
+    dut.eval();
+
+    dut.clk_i = 0;
+    dut.rst_ni = 0;
 }
 
 bool MemifInit(struct SimbricksMemIf &memif, struct SimbricksAdapterParams *memAdapterParams)
@@ -222,6 +277,9 @@ int main(int argc, char *argv[])
         SimbricksParametersFree(memAdapterParams);
         return EXIT_FAILURE;
     }
+
+    // initialize and reset the dut
+    init_dut(*dut);
 
     while (not exiting)
     {
