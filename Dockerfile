@@ -44,7 +44,7 @@ EOF
 
 # Build simulation
 RUN <<EOF
-# make -j `nproc` all
+make -j `nproc` all
 EOF
 
 # ENV PYTHONPATH="/corundum_src"

@@ -1,30 +1,76 @@
+# Copyright 2025 Max Planck Institute for Software Systems, and
+# National University of Singapore
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 dir_ibex := ./ibex
-ibex_out := $(dir_ibex)/build/ibex_out
-verilator_dir_ibex := $(ibex_out)/obj_dir
-verilog_interface_name := ibex_core
+verilator_dir_ibex := $(dir_ibex)/obj_dir
+verilog_interface_name := ibex_top
 verilator_interface_name := V$(verilog_interface_name)
-verilator_src_ibex := $(verilator_dir_ibex)/$(verilator_interface_name).cpp
+verilator_src_ibex := $(verilator_dir_ibex)/$(verilator_interface_name).cc
 verilator_bin_ibex := $(verilator_dir_ibex)/$(verilator_interface_name)
+adapter_main := adapter/ibex_simbricks
+ibex_simbricks_adapter_src := $(adapter_main).cpp
+ibex_simbricks_adapter_bin := $(adapter_main)
+
+simbricks_base ?= /simbricks
+lib_dir := $(simbricks_base)/lib
+simbricks_lib_dir := $(lib_dir)/simbricks
+lib_mem := $(simbricks_lib_dir)/mem/libmem.a
+lib_base := $(simbricks_lib_dir)/base/libbase.a
+lib_parser := $(simbricks_lib_dir)/parser/libparser.a
 
 VERILATOR = verilator
+VFLAGS = 
 
-$(ibex_out):
-	cd ibex && fusesoc --cores-root . run --target=lint --setup --build-root ../$(ibex_out) lowrisc:ibex:ibex_top $(util/ibex_config.py small fusesoc_opts)
 
-$(verilator_src_ibex): $(ibex_out)
-	$(VERILATOR) --cc -O3 \
-	    --Mdir $(verilator_dir_ibex) \
+$(verilator_src_ibex):
+	$(VERILATOR) $(VFLAGS) --cc -O3 \
+		-CFLAGS "-I$(abspath $(lib_dir)) -iquote $(simbricks_base) -O3 -g -Wall -Wno-maybe-uninitialized" \
+		--Mdir $(verilator_dir_ibex) \
 		--top-module $(verilog_interface_name) \
 		--trace \
-		-y $(ibex_out)/src/lowrisc_ibex_ibex_core_0.1/rtl
-		+incdir+ $(ibex_out) \
-		$(verilog_interface_name).sv
+		-y $(dir_ibex)/rtl/ \
+		-y $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/ \
+		-y $(dir_ibex)/vendor/lowrisc_ip/ip/prim_generic/rtl/ \
+		-y $(dir_ibex)/vendor/lowrisc_ip/dv/sv/dv_utils/ \
+		-y $(dir_ibex)/dv/uvm/core_ibex/common/prim/ \
+		$(dir_ibex)/rtl/ibex_pkg.sv \
+		$(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/*_pkg.sv \
+		$(dir_ibex)/dv/uvm/core_ibex/common/prim/prim_pkg.sv \
+		$(dir_ibex)/rtl/$(verilog_interface_name).sv \
+		--exe $(abspath $(ibex_simbricks_adapter_src)) $(abspath $(lib_mem) $(lib_base) $(lib_parser))
 
-all: $(verilator_src_ibex)
+#$(dir_ibex)/rtl/ibex_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_secded_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_util_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_mubi_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_cipher_pkg.sv $(dir_ibex)/rtl/$(verilog_interface_name).sv \
+
+$(verilator_bin_ibex): $(verilator_src_ibex) $(ibex_simbricks_adapter_src)
+	$(MAKE) -C $(verilator_dir_ibex) -f $(verilator_interface_name).mk
+
+$(ibex_simbricks_adapter_bin): $(verilator_bin_ibex)
+	cp $< $@
+
+
+all: $(ibex_simbricks_adapter_bin)
 .DEFAULT_GOAL := all
 
-clean:
-	rm -rf $(verilator_dir_ibex)
+clean: 
+	rm -rf $(ibex_simbricks_adapter_bin) $(verilator_dir_ibex) $(OBJS)
 
-.PHONY: all clean
+.PHONY: all driver adapter clean
