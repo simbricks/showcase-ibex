@@ -51,7 +51,7 @@ core.name = "ibex-Core"
 # create memory
 mem = system.MemSimpleDevice(syst)
 mem.name = "ibex-memory"
-
+mem._load_elf = "/lowrisc-ibex/ibex/examples/sw/simple_system/hello_test/hello_test.elf"
 # connect memory and core
 memChannel = system.MemChannel(core._mem_if, mem._mem_if)
 
@@ -63,10 +63,11 @@ sim = sim_helpers.simple_simulation(
     syst,
     compmap={
         ibex.IbexHost: ibex.IbexSim,
-        system.MemSimpleDevice: simulation., # TODO: simulator missing
+        system.MemSimpleDevice: simulation.BasicMem, # TODO: simulator missing
     },
 )
 
+sim.find_sim(core)._wait = True
 
 """
 Instantiation

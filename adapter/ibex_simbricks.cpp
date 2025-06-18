@@ -28,7 +28,7 @@
 #include <cassert>
 #include <verilated_vcd_c.h>
 
-#include "/lowrisc-ibex/ibex/obj_dir/Vibex_top.h"
+#include <Vibex_top.h>
 
 #include "lib/utils/log.h"
 
@@ -40,7 +40,7 @@ extern "C"
 }
 
 #define IBEX_VERILATOR_DEBUG 1
-#define IBEX_VERILATOR_TRACE 0
+#define IBEX_VERILATOR_TRACE 1
 #define IBEX_VERILATOR_TRACE_LEVEL 40
 
 /* **************************************************************************
@@ -67,14 +67,7 @@ static bool pending_data = false;
 
 void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &dut)
 {
-    volatile union SimbricksProtoMemH2M *msg = SimbricksMemIfH2MOutAlloc(&memif, cur_ts);
-    if (msg == nullptr)
-    {
-#if IBEX_VERILATOR_DEBUG
-        sim_log::LogWarn("send_core_to_mem msg nullptr\n");
-#endif
-        return;
-    }
+    volatile union SimbricksProtoMemH2M *msg;
 
     dut.instr_rvalid_i = 0;
     dut.data_rvalid_i = 0;
@@ -82,6 +75,15 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
     // handel instruction read
     if (dut.instr_req_o and not pending_instr_req)
     {
+        msg = SimbricksMemIfH2MOutAlloc(&memif, cur_ts);
+        if (msg == nullptr)
+        {
+    #if IBEX_VERILATOR_DEBUG
+            sim_log::LogWarn("send_core_to_mem msg nullptr\n");
+    #endif
+            return;
+        }
+
         volatile struct SimbricksProtoMemH2MRead &read = msg->read;
         read.addr = dut.instr_addr_o;
         read.req_id = INSTR_REQ_ID;
@@ -89,13 +91,25 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         pending_instr_req = true;
 #if IBEX_VERILATOR_DEBUG
         sim_log::LogInfo("send_core_to_mem instruction read addr=%lx len=%u nullptr\n", dut.instr_addr_o, 4);
+        sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
+
+        //dut.instr_gnt_i = 0;
     }
 
     // handel data read
     if (dut.data_req_o and not dut.data_we_o and not pending_data)
     {
+        msg = SimbricksMemIfH2MOutAlloc(&memif, cur_ts);
+        if (msg == nullptr)
+        {
+    #if IBEX_VERILATOR_DEBUG
+            sim_log::LogWarn("send_core_to_mem msg nullptr\n");
+    #endif
+            return;
+        }
+
         volatile struct SimbricksProtoMemH2MRead &read = msg->read;
         read.addr = dut.data_addr_o;
         read.req_id = DATA_REQ_ID;
@@ -103,12 +117,24 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         pending_data = true;
 #if IBEX_VERILATOR_DEBUG
         sim_log::LogInfo("send_core_to_mem data read addr=%lx len=%u nullptr\n", dut.data_addr_o, 4);
+        sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
+
+        //dut.data_gnt_i = 0;
     }
     // handel data write
     else if (dut.data_req_o and dut.data_we_o and not pending_data)
     {
+        msg = SimbricksMemIfH2MOutAlloc(&memif, cur_ts);
+        if (msg == nullptr)
+        {
+    #if IBEX_VERILATOR_DEBUG
+            sim_log::LogWarn("send_core_to_mem msg nullptr\n");
+    #endif
+            return;
+        }
+
         volatile struct SimbricksProtoMemH2MWrite &write = msg->write;
         write.addr = dut.data_addr_o;
         write.req_id = DATA_WRITE_ID;
@@ -116,6 +142,7 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         memcpy(const_cast<uint8_t *>(write.data), &dut.data_wdata_o, write.len);
 #if IBEX_VERILATOR_DEBUG
         sim_log::LogInfo("send_core_to_mem data write addr=%lx len=%u nullptr\n", dut.data_addr_o, 4);
+        sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_WRITE_POSTED);
     }
@@ -128,7 +155,7 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
     if (msg == nullptr)
     {
 #if IBEX_VERILATOR_DEBUG
-        sim_log::LogWarn("poll_mem_to_core msg nullptr\n");
+//      sim_log::LogWarn("poll_mem_to_core msg nullptr\n");
 #endif
         return;
     }
@@ -142,13 +169,25 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         if (readcomp.req_id == INSTR_REQ_ID)
         {
             dut.instr_rvalid_i = 1;
+            dut.instr_gnt_i = 1;
             memcpy(&dut.instr_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
+            pending_instr_req = false;
+#if IBEX_VERILATOR_DEBUG
+            sim_log::LogInfo("poll_mem_to_core inst mem read complete (%x)\n", dut.instr_rdata_i);
+            sim_log::FlushLog();
+#endif
         }
         else
         {
             assert(readcomp.req_id == DATA_REQ_ID);
             dut.data_rvalid_i = 1;
-            memcpy(&dut.data_wdata_o, const_cast<uint8_t *>(readcomp.data), 4);
+            dut.data_gnt_i = 1;
+            memcpy(&dut.data_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
+            pending_data = false;
+#if IBEX_VERILATOR_DEBUG
+            sim_log::LogInfo("poll_mem_to_core data mem read complete (%x)\n", dut.data_rdata_i);
+            sim_log::FlushLog();
+#endif
         }
         break;
     }
@@ -171,7 +210,7 @@ void init_dut(Vibex_top &dut)
     dut.rst_ni = 0;
 
     dut.hart_id_i = 0;
-    dut.boot_addr_i = 0;
+    dut.boot_addr_i = 0x00100080;
 
     // Instruction memory interface
     // output logic instr_req_o,
@@ -213,7 +252,7 @@ void init_dut(Vibex_top &dut)
     // output logic alert_major_bus_o,
     // output logic core_sleep_o,
 
-    dut.rst_ni = 1;
+    dut.rst_ni = 0;
     dut.eval();
 
     /* raising edge */
@@ -221,8 +260,25 @@ void init_dut(Vibex_top &dut)
     dut.eval();
 
     dut.clk_i = 0;
-    dut.rst_ni = 0;
+    dut.rst_ni = 1;
     dut.instr_gnt_i = 1;
+    dut.data_gnt_i = 1;
+}
+
+void CheckAlerts(Vibex_top &dut)
+{
+  if (dut.alert_minor_o) {
+    perror("Core error: Minor Alert");
+    abort();
+  }
+  if (dut.alert_major_internal_o) {
+    perror("Core error: Major Internal Alert");
+    abort();
+  }
+  if (dut.alert_major_bus_o) {
+    perror("Core error: Major Bus Alert");
+    abort();
+  }
 }
 
 bool MemifInit(struct SimbricksMemIf &memif, struct SimbricksAdapterParams *memAdapterParams)
@@ -264,16 +320,9 @@ bool MemifInit(struct SimbricksMemIf &memif, struct SimbricksAdapterParams *memA
         return false;
     }
 
-    if (SimbricksBaseIfSHMPoolCreate(
-            &pool_, memAdapterParams->shm_path, SimbricksBaseIfSHMSize(&membase->params)) != 0)
+    if (SimbricksBaseIfConnect(membase) != 0)
     {
-        perror("MemifInit: SimbricksBaseIfSHMPoolCreate failed");
-        return false;
-    }
-
-    if (SimbricksBaseIfListen(membase, &pool_) != 0)
-    {
-        perror("MemifInit: SimbricksBaseIfListen failed");
+        perror("MemifInit: SimbricksBaseIfConnect failed");
         return false;
     }
 
@@ -346,6 +395,7 @@ int main(int argc, char *argv[])
 
     while (not exiting)
     {
+        send_core_to_mem(memif, main_time, *dut);
         while (SimbricksMemIfH2MOutSync(&memif, main_time) != 0)
         {
             sim_log::LogError("warn: SimbricksMemIfH2MOutSync failed (t=%lu)\n", main_time);
@@ -363,17 +413,21 @@ int main(int argc, char *argv[])
 #if IBEX_VERILATOR_TRACE
         trace->dump(main_time);
 #endif
+        CheckAlerts(*dut);
         main_time += clock_period / 2;
 
         // evaluate on rising edge
         dut->clk_i = 1;
-        send_core_to_mem(memif, main_time, *dut);
         dut->eval();
 
 #if IBEX_VERILATOR_TRACE
         trace->dump(main_time);
 #endif
+        CheckAlerts(*dut);
         main_time += clock_period / 2;
+
+        if (main_time > 100000000)
+          exiting = true;
     }
 
 #if IBEX_VERILATOR_TRACE

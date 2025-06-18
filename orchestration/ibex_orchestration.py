@@ -27,7 +27,7 @@ from simbricks.utils import base as utils_base
 from simbricks.orchestration import system as sys
 from simbricks.orchestration.simulation import base as sim_base
 from simbricks.orchestration.instantiation import base as inst_base
-
+from simbricks.orchestration.instantiation import socket as inst_socket
 
 # System Configuration Integration
 
@@ -36,6 +36,7 @@ class IbexHost(sys.Component):
     def __init__(self, s: sys.System) -> None:
         super().__init__(s)
         self._mem_if: sys.MemHostInterface = sys.MemHostInterface(self)
+        self.ifs.append(self._mem_if)
 
     def toJSON(self) -> dict:
         json_obj = super().toJSON()
@@ -47,6 +48,7 @@ class IbexHost(sys.Component):
         instance = super().fromJSON(system, json_obj)
         mem_if_id = int(utils_base.get_json_attr_top(json_obj, "mem_if"))
         instance._mem_if = system.get_inf(mem_if_id)
+        print("in restore:", instance._mem_if)
         return instance
 
 
@@ -102,3 +104,6 @@ class IbexSim(sim_base.Simulator):
         instance = super().fromJSON(simulation, json_obj)
         instance.clock_freq = utils_base.get_json_attr_top(json_obj, "clock_freq")
         return instance
+
+    def supported_socket_types(self, interface: sys.Interface) -> set[inst_socket.SockType]:
+        return {inst_socket.SockType.CONNECT}
