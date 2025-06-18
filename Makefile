@@ -24,7 +24,7 @@ dir_ibex := ./ibex
 verilator_dir_ibex := $(dir_ibex)/obj_dir
 verilog_interface_name := ibex_top
 verilator_interface_name := V$(verilog_interface_name)
-verilator_src_ibex := $(verilator_dir_ibex)/$(verilator_interface_name).cc
+verilator_src_ibex := $(verilator_dir_ibex)/$(verilator_interface_name).cpp
 verilator_bin_ibex := $(verilator_dir_ibex)/$(verilator_interface_name)
 adapter_main := adapter/ibex_simbricks
 ibex_simbricks_adapter_src := $(adapter_main).cpp
@@ -58,7 +58,6 @@ $(verilator_src_ibex):
 		$(dir_ibex)/rtl/$(verilog_interface_name).sv \
 		--exe $(abspath $(ibex_simbricks_adapter_src)) $(abspath $(lib_mem) $(lib_base) $(lib_parser))
 
-#$(dir_ibex)/rtl/ibex_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_secded_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_util_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_mubi_pkg.sv $(dir_ibex)/vendor/lowrisc_ip/ip/prim/rtl/prim_cipher_pkg.sv $(dir_ibex)/rtl/$(verilog_interface_name).sv \
 
 $(verilator_bin_ibex): $(verilator_src_ibex) $(ibex_simbricks_adapter_src)
 	$(MAKE) -C $(verilator_dir_ibex) -f $(verilator_interface_name).mk
