@@ -44,9 +44,11 @@ EOF
 
 # risc-v compiler toolchain
 RUN <<EOF
-mkdir -p /lowrisc-toolchain-gcc
-wget -O /tmp/lowrisc-toolchain-gcc.tar.xz https://github.com/lowRISC/lowrisc-toolchains/releases/download/20250611-1/lowrisc-toolchain-gcc-rv64imac-x86_64-20250611-1.tar.xz
-tar -xf  /tmp/lowrisc-toolchain-gcc.tar.xz --strip-components=1 -C /lowrisc-toolchain-gcc
+mkdir -p /tmp/lowrisc-toolchain-gcc
+wget -O /tmp/lowrisc-toolchain-gcc.tar.xz https://github.com/lowRISC/lowrisc-toolchains/releases/download/20250303-1/lowrisc-toolchain-gcc-rv32imcb-x86_64-20250303-1.tar.xz
+tar -xf  /tmp/lowrisc-toolchain-gcc.tar.xz --strip-components=1 -C /tmp/lowrisc-toolchain-gcc
+cd /tmp/lowrisc-toolchain-gcc
+cp -r bin include lib lib64 libexec riscv32-unknown-elf share /usr/local
 EOF
 
 COPY --chown=simbricks . /lowrisc-ibex
@@ -57,11 +59,8 @@ RUN <<EOF
 pip3 install -U -r ibex/python-requirements.txt
 EOF
 
-# libelf and it's dev libs + srecord
-# RUN <<EOF
-# apt-get install libelf-dev
-# apt-get install srecord
-# EOF
+# install srecord
+RUN apt-get install -y srecord
 
 # Build simulation
 RUN <<EOF
