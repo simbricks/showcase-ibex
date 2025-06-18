@@ -11,8 +11,8 @@
         "surfer-project.surfer"
       ]
     }
-  }
-//   "onCreateCommand": "./.devcontainer/onCreate.sh",
+  },
+  "onCreateCommand": "./.devcontainer/onCreate.sh",
 //   "remoteEnv": {
 //     "PYTHONPATH": "${containerEnv:PYTHONPATH}:/workspaces/simbricks-examples/corundum"
 //   }
