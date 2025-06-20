@@ -1,4 +1,4 @@
-# Copyright 2024 Max Planck Institute for Software Systems, and
+# Copyright 2025 Max Planck Institute for Software Systems, and
 # National University of Singapore
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -52,8 +52,13 @@ core.name = "ibex-Core"
 mem = system.MemSimpleDevice(syst)
 mem.name = "ibex-memory"
 mem._load_elf = "/lowrisc-ibex/ibex/examples/sw/simple_system/hello_test/hello_test.elf"
-# connect memory and core
-memChannel = system.MemChannel(core._mem_if, mem._mem_if)
+
+# create interconnect
+ic = system.MemInterconnect(syst)
+ic.name = "interconnect"
+ic.connect_host(core._mem_if)
+c = ic.connect_device(mem._mem_if)
+ic.add_route(c.host_if(), 0, mem._size)
 
 
 """
@@ -63,11 +68,13 @@ sim = sim_helpers.simple_simulation(
     syst,
     compmap={
         ibex.IbexHost: ibex.IbexSim,
-        system.MemSimpleDevice: simulation.BasicMem, # TODO: simulator missing
+        system.MemSimpleDevice: simulation.BasicMem,
+        system.MemInterconnect: simulation.BasicInterconnect,
     },
 )
 
 sim.find_sim(core)._wait = True
+sim.find_sim(ic).name = 'interconnect'
 
 """
 Instantiation
