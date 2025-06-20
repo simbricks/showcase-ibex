@@ -40,7 +40,7 @@ extern "C"
 }
 
 #define IBEX_VERILATOR_DEBUG 1
-#define IBEX_VERILATOR_TRACE 1
+#define IBEX_VERILATOR_TRACE 0
 #define IBEX_VERILATOR_TRACE_LEVEL 40
 
 /* **************************************************************************
@@ -65,12 +65,17 @@ static void sigusr1_handler([[maybe_unused]] int _dummy)
 static bool pending_instr_req = false;
 static bool pending_data = false;
 
-void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &dut)
+struct delayed {
+    bool instr_rvalid_i;
+    bool data_rvalid_i;
+};
+
+void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &dut, delayed &delay)
 {
     volatile union SimbricksProtoMemH2M *msg;
 
-    dut.instr_rvalid_i = 0;
-    dut.data_rvalid_i = 0;
+    delay.instr_rvalid_i = 0;
+    delay.data_rvalid_i = 0;
 
     // handel instruction read
     if (dut.instr_req_o and not pending_instr_req)
@@ -94,8 +99,6 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
-
-        //dut.instr_gnt_i = 0;
     }
 
     // handel data read
@@ -120,8 +123,6 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
-
-        //dut.data_gnt_i = 0;
     }
     // handel data write
     else if (dut.data_req_o and dut.data_we_o and not pending_data)
@@ -145,10 +146,12 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_WRITE_POSTED);
+
+        delay.data_rvalid_i = 1;
     }
 }
 
-void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &dut)
+void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &dut, delayed &delay)
 {
 
     volatile union SimbricksProtoMemM2H *msg = SimbricksMemIfM2HInPoll(&memif, cur_ts);
@@ -168,8 +171,7 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         volatile struct SimbricksProtoMemM2HReadcomp &readcomp = msg->readcomp;
         if (readcomp.req_id == INSTR_REQ_ID)
         {
-            dut.instr_rvalid_i = 1;
-            dut.instr_gnt_i = 1;
+            delay.instr_rvalid_i = 1;
             memcpy(&dut.instr_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
             pending_instr_req = false;
 #if IBEX_VERILATOR_DEBUG
@@ -180,8 +182,7 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         else
         {
             assert(readcomp.req_id == DATA_REQ_ID);
-            dut.data_rvalid_i = 1;
-            dut.data_gnt_i = 1;
+            delay.data_rvalid_i = 1;
             memcpy(&dut.data_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
             pending_data = false;
 #if IBEX_VERILATOR_DEBUG
@@ -203,11 +204,13 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
     SimbricksMemIfM2HInDone(&memif, msg);
 }
 
-void init_dut(Vibex_top &dut)
+void init_dut(Vibex_top &dut, delayed &delay)
 {
     // Clock and Reset
     dut.clk_i = 0;
     dut.rst_ni = 0;
+
+    dut.scan_rst_ni = 1;
 
     dut.hart_id_i = 0;
     dut.boot_addr_i = 0x00100080;
@@ -216,6 +219,7 @@ void init_dut(Vibex_top &dut)
     // output logic instr_req_o,
     dut.instr_gnt_i = 0;
     dut.instr_rvalid_i = 0;
+    delay.instr_rvalid_i = 0;
     // input logic instr_gnt_i,
     // input logic instr_rvalid_i,
     // output logic [31:0] instr_addr_o,
@@ -230,6 +234,7 @@ void init_dut(Vibex_top &dut)
     // output logic data_req_o,
     dut.data_gnt_i = 0;
     dut.data_rvalid_i = 0;
+    delay.data_rvalid_i = 0;
     // input logic data_gnt_i,
     // input logic data_rvalid_i,
     // output logic data_we_o,
@@ -245,7 +250,7 @@ void init_dut(Vibex_top &dut)
     // input logic data_err_i,
 
     // CPU Control Signals
-    dut.fetch_enable_i = 1;
+    dut.fetch_enable_i = 5;
     // input ibex_mubi_t fetch_enable_i,
     // output logic alert_minor_o,
     // output logic alert_major_internal_o,
@@ -391,11 +396,12 @@ int main(int argc, char *argv[])
     }
 
     // initialize and reset the dut
-    init_dut(*dut);
+    delayed delay;
+    init_dut(*dut, delay);
 
     while (not exiting)
     {
-        send_core_to_mem(memif, main_time, *dut);
+        send_core_to_mem(memif, main_time, *dut, delay);
         while (SimbricksMemIfH2MOutSync(&memif, main_time) != 0)
         {
             sim_log::LogError("warn: SimbricksMemIfH2MOutSync failed (t=%lu)\n", main_time);
@@ -403,31 +409,31 @@ int main(int argc, char *argv[])
 
         do
         {
-            poll_mem_to_core(memif, main_time, *dut);
+            poll_mem_to_core(memif, main_time, *dut, delay);
         } while (not exiting and (memAdapterParams->sync and
                                   SimbricksMemIfM2HInTimestamp(&memif) <= main_time));
 
-        /* falling edge */
-        dut->clk_i = 0;
-        dut->eval();
-#if IBEX_VERILATOR_TRACE
-        trace->dump(main_time);
-#endif
-        CheckAlerts(*dut);
-        main_time += clock_period / 2;
-
-        // evaluate on rising edge
+        /* evaluate on raising edge */
         dut->clk_i = 1;
         dut->eval();
-
 #if IBEX_VERILATOR_TRACE
         trace->dump(main_time);
 #endif
         CheckAlerts(*dut);
         main_time += clock_period / 2;
 
-        if (main_time > 100000000)
-          exiting = true;
+        dut->instr_rvalid_i = delay.instr_rvalid_i;
+        dut->data_rvalid_i = delay.data_rvalid_i;
+
+        // falling edge
+        dut->clk_i = 0;
+        dut->eval();
+
+#if IBEX_VERILATOR_TRACE
+        trace->dump(main_time);
+#endif
+        CheckAlerts(*dut);
+        main_time += clock_period / 2;
     }
 
 #if IBEX_VERILATOR_TRACE
