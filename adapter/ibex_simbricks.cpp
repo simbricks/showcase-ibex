@@ -39,7 +39,7 @@ extern "C"
 #include <simbricks/parser/parser.h>
 }
 
-#define IBEX_VERILATOR_DEBUG 1
+#define IBEX_VERILATOR_DEBUG 0
 #define IBEX_VERILATOR_TRACE 0
 #define IBEX_VERILATOR_TRACE_LEVEL 40
 
@@ -64,10 +64,13 @@ static void sigusr1_handler([[maybe_unused]] int _dummy)
 
 static bool pending_instr_req = false;
 static bool pending_data = false;
+static bool pending_data_write = false;
 
 struct delayed {
     bool instr_rvalid_i;
+    uint32_t instr_rdata_i;
     bool data_rvalid_i;
+    uint32_t data_rdata_i;
 };
 
 void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &dut, delayed &delay)
@@ -95,7 +98,7 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         read.len = 4;
         pending_instr_req = true;
 #if IBEX_VERILATOR_DEBUG
-        sim_log::LogInfo("send_core_to_mem instruction read addr=%lx len=%u nullptr\n", dut.instr_addr_o, 4);
+        sim_log::LogInfo("[%lu] send_core_to_mem instruction read addr=%lx len=%u nullptr\n", main_time, dut.instr_addr_o, 4);
         sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
@@ -118,8 +121,9 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         read.req_id = DATA_REQ_ID;
         read.len = 4; // TODO: bytes enabled
         pending_data = true;
+
 #if IBEX_VERILATOR_DEBUG
-        sim_log::LogInfo("send_core_to_mem data read addr=%lx len=%u nullptr\n", dut.data_addr_o, 4);
+        sim_log::LogInfo("[%lu] send_core_to_mem data read addr=%lx len=%u nullptr\n", main_time, dut.data_addr_o, 4);
         sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
@@ -139,14 +143,25 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         volatile struct SimbricksProtoMemH2MWrite &write = msg->write;
         write.addr = dut.data_addr_o;
         write.req_id = DATA_WRITE_ID;
-        write.len = 4; // TODO: bytes enabled
+        if (dut.data_be_o == 1)
+            write.len = 1;
+        else if (dut.data_be_o == 2)
+            write.len = 2;
+        else
+            write.len = 4;
         memcpy(const_cast<uint8_t *>(write.data), &dut.data_wdata_o, write.len);
+
 #if IBEX_VERILATOR_DEBUG
-        sim_log::LogInfo("send_core_to_mem data write addr=%lx len=%u nullptr\n", dut.data_addr_o, 4);
+        sim_log::LogInfo("[%lu] send_core_to_mem data write addr=%lx len=%u nullptr\n", main_time, dut.data_addr_o, 4);
         sim_log::FlushLog();
 #endif
         SimbricksMemIfH2MOutSend(&memif, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_WRITE_POSTED);
-
+        pending_data = true;
+        pending_data_write = true;
+    } else if (pending_data_write) {
+        // complete pending write from prior cycle
+        pending_data_write = false;
+        pending_data = false;
         delay.data_rvalid_i = 1;
     }
 }
@@ -171,22 +186,24 @@ void poll_mem_to_core(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
         volatile struct SimbricksProtoMemM2HReadcomp &readcomp = msg->readcomp;
         if (readcomp.req_id == INSTR_REQ_ID)
         {
+            assert(!delay.instr_rvalid_i);
             delay.instr_rvalid_i = 1;
-            memcpy(&dut.instr_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
+            memcpy(&delay.instr_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
             pending_instr_req = false;
 #if IBEX_VERILATOR_DEBUG
-            sim_log::LogInfo("poll_mem_to_core inst mem read complete (%x)\n", dut.instr_rdata_i);
+            sim_log::LogInfo("[%lu] poll_mem_to_core inst mem read complete (%x)\n", main_time, dut.instr_rdata_i);
             sim_log::FlushLog();
 #endif
         }
         else
         {
             assert(readcomp.req_id == DATA_REQ_ID);
+            assert(!delay.data_rvalid_i);
             delay.data_rvalid_i = 1;
-            memcpy(&dut.data_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
+            memcpy(&delay.data_rdata_i, const_cast<uint8_t *>(readcomp.data), 4);
             pending_data = false;
 #if IBEX_VERILATOR_DEBUG
-            sim_log::LogInfo("poll_mem_to_core data mem read complete (%x)\n", dut.data_rdata_i);
+            sim_log::LogInfo("[%lu] poll_mem_to_core data mem read complete (%x)\n", main_time, dut.data_rdata_i);
             sim_log::FlushLog();
 #endif
         }
@@ -401,12 +418,12 @@ int main(int argc, char *argv[])
 
     while (not exiting)
     {
-        send_core_to_mem(memif, main_time, *dut, delay);
         while (SimbricksMemIfH2MOutSync(&memif, main_time) != 0)
         {
             sim_log::LogError("warn: SimbricksMemIfH2MOutSync failed (t=%lu)\n", main_time);
         }
 
+        send_core_to_mem(memif, main_time, *dut, delay);
         do
         {
             poll_mem_to_core(memif, main_time, *dut, delay);
@@ -423,7 +440,11 @@ int main(int argc, char *argv[])
         main_time += clock_period / 2;
 
         dut->instr_rvalid_i = delay.instr_rvalid_i;
+        dut->instr_rdata_i = delay.instr_rdata_i;
+        dut->instr_gnt_i = !pending_instr_req;
         dut->data_rvalid_i = delay.data_rvalid_i;
+        dut->data_rdata_i = delay.data_rdata_i;
+        dut->data_gnt_i = !pending_data;
 
         // falling edge
         dut->clk_i = 0;
