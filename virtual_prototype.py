@@ -24,6 +24,7 @@ from simbricks.orchestration import system
 from simbricks.orchestration import simulation
 from simbricks.orchestration.helpers import simulation as sim_helpers
 from simbricks.orchestration.helpers import instantiation as inst_helpers
+from simbricks.utils import base as utils_base
 
 """
 Import the orchestration bits we created as part of the Corundum integration.
@@ -53,10 +54,16 @@ mem = system.MemSimpleDevice(syst)
 mem.name = "ibex-memory"
 mem._load_elf = "/lowrisc-ibex/ibex/examples/sw/simple_system/hello_test/hello_test.elf"
 
+# create terminal
+terminal = system.MemTerminal(syst)
+terminal.name = "terminal"
+
 # create interconnect
 ic = system.MemInterconnect(syst)
 ic.name = "interconnect"
 ic.connect_host(core._mem_if)
+c = ic.connect_device(terminal._mem_if)
+ic.add_route(c.host_if(), 0x20000, 0x1000)
 c = ic.connect_device(mem._mem_if)
 ic.add_route(c.host_if(), 0, mem._size)
 
@@ -69,17 +76,21 @@ sim = sim_helpers.simple_simulation(
     compmap={
         ibex.IbexHost: ibex.IbexSim,
         system.MemSimpleDevice: simulation.BasicMem,
+        system.MemTerminal: simulation.MemTerminal,
         system.MemInterconnect: simulation.BasicInterconnect,
     },
 )
-
+sim.name = 'ibex-sim'
 sim.find_sim(core)._wait = True
 sim.find_sim(ic).name = 'interconnect'
+
+sim.enable_synchronization(500, utils_base.Time.Nanoseconds)
 
 """
 Instantiation
 """
 instance = inst_helpers.simple_instantiation(sim)
+
 # Here we ensure that the runner does choose a proper docker image (the image defined in this repository)
 # for executing the fragment we created.
 fragment = instance.fragments[0]
