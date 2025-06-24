@@ -1,0 +1,12 @@
+*.bin
+*.d
+*.elf
+*.o
+*.vmem
+
+adapter/ibex_simbricks
+
+ibex-verilator-debug.vcd
+
+__pycache__/
+out/

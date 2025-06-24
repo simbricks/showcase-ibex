@@ -30,6 +30,9 @@ adapter_main := adapter/ibex_simbricks
 ibex_simbricks_adapter_src := $(adapter_main).cpp
 ibex_simbricks_adapter_bin := $(adapter_main)
 
+ibex_app_dir := ./app
+ibex_simple_app := $(ibex_app_dir)/hello_test.elf
+
 simbricks_base ?= /simbricks
 lib_dir := $(simbricks_base)/lib
 simbricks_lib_dir := $(lib_dir)/simbricks
@@ -65,11 +68,15 @@ $(verilator_bin_ibex): $(verilator_src_ibex) $(ibex_simbricks_adapter_src)
 $(ibex_simbricks_adapter_bin): $(verilator_bin_ibex)
 	cp $< $@
 
+$(ibex_simple_app):
+	$(MAKE) -C $(ibex_app_dir)
 
-all: $(ibex_simbricks_adapter_bin)
+
+all: $(ibex_simbricks_adapter_bin) $(ibex_simple_app)
 .DEFAULT_GOAL := all
 
 clean: 
 	rm -rf $(ibex_simbricks_adapter_bin) $(verilator_dir_ibex) $(OBJS)
+	$(MAKE) -C $(ibex_app_dir) distclean
 
-.PHONY: all driver adapter clean
+.PHONY: all clean
