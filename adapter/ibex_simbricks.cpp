@@ -131,6 +131,10 @@ void send_core_to_mem(struct SimbricksMemIf &memif, uint64_t cur_ts, Vibex_top &
     // handel data write
     else if (dut.data_req_o and dut.data_we_o and not pending_data)
     {
+        if (dut.data_addr_o == 0x20008 && dut.data_wdata_o == 1) {
+            exiting = true;
+            return;
+        }
         msg = SimbricksMemIfH2MOutAlloc(&memif, cur_ts);
         if (msg == nullptr)
         {
