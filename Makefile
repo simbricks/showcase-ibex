@@ -30,7 +30,7 @@ adapter_main := adapter/ibex_simbricks
 ibex_simbricks_adapter_src := $(adapter_main).cpp
 ibex_simbricks_adapter_bin := $(adapter_main)
 
-ibex_app_dir := ./app
+ibex_app_dir := ./app/hello_test
 ibex_simple_app := $(ibex_app_dir)/hello_test.elf
 
 simbricks_base ?= /simbricks

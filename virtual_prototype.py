@@ -52,7 +52,7 @@ core.name = "ibex-Core"
 # create memory
 mem = system.MemSimpleDevice(syst)
 mem.name = "ibex-memory"
-mem._load_elf = "/lowrisc-ibex/app/hello_test.elf"
+mem._load_elf = "/lowrisc-ibex/app/hello_test/hello_test.elf"
 
 # create terminal
 terminal = system.MemTerminal(syst)

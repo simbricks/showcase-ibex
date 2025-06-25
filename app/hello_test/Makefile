@@ -11,4 +11,4 @@ PROGRAM_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 # extension for assembly files
 EXTRA_SRCS :=
 
-include ${PROGRAM_DIR}/../ibex/examples/sw/simple_system/common/common.mk
+include ${PROGRAM_DIR}/../common/common.mk
