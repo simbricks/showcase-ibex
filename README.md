@@ -10,13 +10,13 @@ This includes:
 
 ## Getting started
 
-You can run the virtual prototype either via our [demo](www.simbricks.io/demo/) or locally on your machine.
+You can run the virtual prototype either via our [demo](https://www.simbricks.io/demo/) or locally on your machine.
 
 ### SimBricks demo
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/simbricks/showcase-ibex/?quickstart=1)
 
-After creating a [SimBricks demo account](www.simbricks.io/demo/) you can open the devcontainer that is provided with this repository. In the devcontainer you just need to submit the virtual prototype configuration using the already installed `simbricks-cli` command:
+After creating a [SimBricks demo account](https://www.simbricks.io/demo/) you can open the devcontainer that is provided with this repository. In the devcontainer you just need to submit the virtual prototype configuration using the already installed `simbricks-cli` command:
 
 ```bash
 simbricks-cli runs submit -f virtual_prototype.py
