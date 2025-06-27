@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="150.146mm"
+   height="130.744mm"
+   viewBox="0 0 150.146 130.744"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-29.335843,-54.467013)">
+    <g
+       id="g21">
+      <rect
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.564997;stroke-dasharray:none;stroke-opacity:1"
+         id="rect20"
+         width="150.146"
+         height="130.744"
+         x="29.335842"
+         y="54.467007" />
+      <g
+         id="g20">
+        <g
+           id="g15">
+          <g
+             id="g12">
+            <rect
+               style="fill:none;fill-opacity:0.130411;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+               id="rect3"
+               width="65.031311"
+               height="21.627256"
+               x="32.568172"
+               y="57.69931"
+               ry="2.6822848" />
+            <text
+               xml:space="preserve"
+               style="font-size:5.64444px;line-height:1.25;font-family:'Latin Modern Sans';-inkscape-font-specification:'Latin Modern Sans, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="64.939896"
+               y="70.471565"
+               id="text3"><tspan
+                 id="tspan3"
+                 style="font-size:5.64444px;stroke-width:0.264583"
+                 x="64.939896"
+                 y="70.471565">Basic Memory Device</tspan></text>
+            <rect
+               style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+               id="rect5"
+               width="8.6639757"
+               height="5.4149847"
+               x="60.751839"
+               y="73.911583"
+               ry="0" />
+          </g>
+          <g
+             id="g13"
+             transform="translate(-8.6085854,2.9395642)">
+            <rect
+               style="fill:none;fill-opacity:0.130411;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+               id="rect4"
+               width="65.031311"
+               height="21.627256"
+               x="119.82678"
+               y="54.759747"
+               ry="2.6822848" />
+            <text
+               xml:space="preserve"
+               style="font-size:5.64444px;line-height:1.25;font-family:'Latin Modern Sans';-inkscape-font-specification:'Latin Modern Sans, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:0.264583"
+               x="152.1985"
+               y="67.532005"
+               id="text4"><tspan
+                 id="tspan4"
+                 style="font-size:5.64444px;stroke-width:0.264583"
+                 x="152.1985"
+                 y="67.532005">Memory Terminal</tspan></text>
+            <rect
+               style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+               id="rect6"
+               width="8.6639757"
+               height="5.4149847"
+               x="148.01045"
+               y="70.972015"
+               ry="0" />
+          </g>
+        </g>
+        <g
+           id="g19">
+          <rect
+             style="fill:none;fill-opacity:0.130411;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+             id="rect2"
+             width="65.031311"
+             height="21.627256"
+             x="71.893181"
+             y="97.692841"
+             ry="2.6822848" />
+          <text
+             xml:space="preserve"
+             style="font-size:5.64444px;line-height:1.25;font-family:'Latin Modern Sans';-inkscape-font-specification:'Latin Modern Sans, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:0.264583"
+             x="104.26491"
+             y="110.4651"
+             id="text2"><tspan
+               id="tspan2"
+               style="font-size:5.64444px;stroke-width:0.264583"
+               x="104.26491"
+               y="110.4651">Memory Interconnect</tspan></text>
+          <rect
+             style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+             id="rect7"
+             width="8.6639757"
+             height="5.4149847"
+             x="86.368782"
+             y="97.692841"
+             ry="0" />
+          <rect
+             style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+             id="rect8"
+             width="8.6639757"
+             height="5.4149847"
+             x="113.78492"
+             y="97.692841"
+             ry="0" />
+          <rect
+             style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+             id="rect9"
+             width="8.6639757"
+             height="5.4149847"
+             x="100.07685"
+             y="113.90511"
+             ry="0" />
+        </g>
+        <g
+           id="g18">
+          <rect
+             style="fill:none;fill-opacity:0.130411;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+             id="rect1"
+             width="65.031311"
+             height="21.627256"
+             x="71.893181"
+             y="137.68637"
+             ry="2.6822848" />
+          <text
+             xml:space="preserve"
+             style="font-size:5.64444px;line-height:1.25;font-family:'Latin Modern Sans';-inkscape-font-specification:'Latin Modern Sans, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:0.264583"
+             x="104.26491"
+             y="150.45862"
+             id="text1"><tspan
+               id="tspan1"
+               style="font-size:5.64444px;stroke-width:0.264583"
+               x="104.26491"
+               y="150.45862">lowRISC Ibex RISC-V core</tspan></text>
+          <rect
+             style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+             id="rect10"
+             width="8.6639757"
+             height="5.4149847"
+             x="100.07684"
+             y="137.68637"
+             ry="0" />
+        </g>
+        <path
+           style="fill:none;stroke:#6c8b23;stroke-width:0.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Triangle);marker-end:url(#Triangle)"
+           d="M 89.769967,97.69284 66.58827,79.326568"
+           id="path15" />
+        <path
+           style="fill:none;stroke:#6c8b23;stroke-width:0.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Triangle);marker-end:url(#Triangle)"
+           d="M 119.20281,97.69284 143.02279,79.326567"
+           id="path16" />
+        <path
+           style="fill:none;stroke:#6c8b23;stroke-width:0.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Triangle);marker-end:url(#Triangle)"
+           d="M 104.40884,137.68637 V 119.3201"
+           id="path17" />
+        <path
+           style="fill:none;stroke:#6c8b23;stroke-width:0.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Triangle);marker-end:url(#Triangle)"
+           d="m 41.58773,170.43483 h -7.2457"
+           id="path18" />
+        <rect
+           style="fill:#f36c30;fill-opacity:1;stroke:#000000;stroke-width:0.465;stroke-opacity:1"
+           id="rect18"
+           width="8.6639757"
+           height="5.4149847"
+           x="33.632893"
+           y="176.56372"
+           ry="0" />
+        <text
+           xml:space="preserve"
+           style="font-size:5.64444px;line-height:1.25;font-family:'Latin Modern Sans';-inkscape-font-specification:'Latin Modern Sans, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:0.264583"
+           x="70.9748"
+           y="172.39345"
+           id="text18"><tspan
+             id="tspan18"
+             style="font-size:5.64444px;stroke-width:0.264583"
+             x="70.9748"
+             y="172.39345">SimBricks Channel</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-size:5.64444px;line-height:1.25;font-family:'Latin Modern Sans';-inkscape-font-specification:'Latin Modern Sans, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:0.264583"
+           x="104.03149"
+           y="180.68233"
+           id="text19"><tspan
+             id="tspan19"
+             style="font-size:5.64444px;stroke-width:0.264583"
+             x="104.03149"
+             y="180.68233">Memory Interface (through SimBricks adapter)</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

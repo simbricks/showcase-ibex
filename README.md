@@ -47,3 +47,23 @@ docker run --rm -it --entrypoint /bin/bash showcase-ibex:latest
 > cd /lowrisc-ibex
 > simbricks-run --verbose virtual_prototype.py
 ```
+
+## Virtual prototype configuration overview
+
+![Overview of virtual prototype configuration](/ibex_showcase_overview.svg)
+
+The python script [virtual_prototype.py](virtual_prototype.py) contains a virtual prototyping
+configuration that runs the system as shown in the figure above. The configuration runs the Ibex
+core using Verilator including our [adapter](/adapter/ibex_simbricks.cpp), a basic memory device
+simulator, a simple memory terminal simulator, and a memory interconnect simulator. The memory
+interconnect connects the Ibex core with the memory device and the terminal. All connections are
+SimBricks channels using the simple memory protocol provided by SimBricks.
+
+When executing the configuration, first the binary of the application is loaded into the memory
+device and then the Ibex core starts reading the instructions from the memory and executes them.
+During the execution the Ibex core writes output to the terminal simulator, which prints the output
+to the simulation output.
+
+This serves as a simple first example, but of course it can be easily extended. For example, other
+simulators that implement the memory interface can be connected through SimBricks channels to the
+Ibex core in the same way as the memory device and the memory terminal.
